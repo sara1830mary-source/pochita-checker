@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ポチ太クラス課題解決ミッション</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;background:#fff8ef;color:#33261f}
+main{max-width:900px;margin:auto;padding:22px}
+h1{font-size:clamp(25px,5vw,40px);margin:0 0 8px}h2{margin:0 0 12px}
+.card{background:white;border:2px solid #ead9c9;border-radius:20px;padding:20px;margin:16px 0}
+.badge{display:inline-block;border-radius:999px;padding:5px 11px;background:#fff0c7;font-weight:700;font-size:14px}
+input,textarea,button{font:inherit}input,textarea{width:100%;padding:12px;border:1px solid #cdbcae;border-radius:12px;margin-top:6px}textarea{min-height:76px;resize:vertical}
+button{border:0;border-radius:14px;padding:12px 18px;background:#5b4438;color:white;font-weight:700;cursor:pointer;margin-top:12px}button.secondary{background:#eadfd7;color:#3b2c25}
+button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none}.status{padding:10px 12px;border-radius:12px;background:#f3eee9;margin:10px 0}.ok{background:#e7f7e9}.ng{background:#fff0f0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.idea{border:1px solid #e2d4c8;border-radius:14px;padding:14px;background:#fffdfb}.idea h3{margin:0 0 8px}.small{font-size:13px;color:#6e625a}.paw{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.paw button{width:52px;height:52px;border-radius:50%;padding:0;margin:0}.paw button.done{background:#6c9b70}.center{text-align:center}.danger{color:#9a3e3e}
+@media(max-width:600px){main{padding:14px}.grid{grid-template-columns:1fr}.card{padding:16px}}
+</style>
+</head>
+<body>
+<main id="app">
+  <div class="card center">
+    <div class="badge">🐕 ポチ太ミッション</div>
+    <h1>クラス課題解決活動</h1>
+    <p>ポチ太を探しながら、クラスの「もっとよくしたい」を見つけよう！</p>
+    <div id="connection" class="status">Firebaseに接続中…</div>
+  </div>
+
+  <section id="m1" class="card">
+    <h2>🔎 MISSION 1　ポチ太を探せ！</h2>
+    <p>5人それぞれに配られた情報カードを、<strong>1人ずつ読み上げて</strong>班で情報を組み合わせよう。</p>
+    <p class="small">全員が同時に話すと、ポチ太の大事な情報を聞き逃すかも…。</p>
+    <label>答え（部屋の名前）
+      <input id="m1answer" placeholder="例：○○室">
+    </label>
+    <button id="m1btn">答えを送る</button>
+    <div id="m1result" class="status"></div>
+  </section>
+
+  <section id="m2" class="card hidden">
+    <h2>🧩 MISSION 2　解決策をつくれ！</h2>
+    <p>班で「明日から実行できる」具体的な解決策を考えよう。</p>
+    <div class="grid">
+      <label>班
+        <select id="team" style="width:100%;padding:12px;border:1px solid #cdbcae;border-radius:12px;margin-top:6px">
+          <option value="1">1班</option><option value="2">2班</option><option value="3">3班</option><option value="4">4班</option>
+          <option value="5">5班</option><option value="6">6班</option><option value="7">7班</option><option value="8">8班</option>
+        </select>
+      </label>
+      <label>だれが
+        <input id="who" placeholder="例：給食当番">
+      </label>
+      <label>いつ・どこで
+        <input id="when" placeholder="例：昼休みの教室">
+      </label>
+      <label>何をする
+        <input id="what" placeholder="具体的な行動">
+      </label>
+      <label>どうやって
+        <input id="how" placeholder="実行方法">
+      </label>
+      <label>なぜ解決する？
+        <input id="why" placeholder="理由・エビデンス">
+      </label>
+    </div>
+    <button id="m2btn">MISSION 2 CLEAR</button>
+    <div id="m2result" class="status"></div>
+  </section>
+
+  <section id="ideas" class="card hidden">
+    <h2>💭 みんなの考え</h2>
+    <p>MISSION 2をクリアした班のアイデアが、ここにリアルタイムで集まります。</p>
+    <p class="small">※名前などの個人情報は入力しないでください。</p>
+    <div id="ideaList" class="grid"></div>
+  </section>
+
+  <section id="m3" class="card hidden">
+    <h2>🐾 MISSION 3　8班の情報をつなげよう！</h2>
+    <p>8班すべてがMISSION 2をクリアしたら、最後のミッションが開くよ。</p>
+    <div class="paw" id="paws"></div>
+    <div id="m3result" class="status"></div>
+  </section>
+
+  <section id="final" class="card hidden">
+    <h2>🌈 FINAL　Semester 2へ</h2>
+    <p>8班の考えを見比べて、クラス全員で「明日から実行すること」を1つ決めよう。</p>
+    <label>クラスで決めた行動
+      <textarea id="finalText" placeholder="例：○○の時間は、○○をしてから次の行動に移る。"></textarea>
+    </label>
+    <button id="finalbtn">FINALを保存</button>
+    <div id="finalresult" class="status"></div>
+  </section>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDAwvP2Q3BpW9GqxI97xQhXSI-Y19HhDFA",
+  authDomain: "pochita-checker.firebaseapp.com",
+  databaseURL: "https://pochita-checker-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "pochita-checker",
+  storageBucket: "pochita-checker.firebasestorage.app",
+  messagingSenderId: "973538670530",
+  appId: "1:973538670530:web:b64aed17dc6a83b13fc85b",
+  measurementId: "G-NGHQL7EETM"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+let user = null;
+
+const $ = id => document.getElementById(id);
+function status(id,msg,ok=false){$(id).textContent=msg;$(id).className="status "+(ok?"ok":"ng")}
+
+onAuthStateChanged(auth,u=>{
+  user=u;
+  if(u) status("connection","🟢 Firebase接続OK",true);
+});
+signInAnonymously(auth).catch(e=>status("connection","🔴 Firebase接続エラー："+e.message));
+
+$("m1btn").addEventListener("click",()=>{
+  const a=$("m1answer").value.trim();
+  if(a==="生徒会室"){
+    status("m1result","🎉 ポチ太、見つけた！ MISSION 2へ進もう！",true);
+    $("m2").classList.remove("hidden");
+  }else{
+    status("m1result","まだ違うみたい。5枚のカードの情報をもう一度組み合わせてみよう！");
+  }
+});
+
+$("m2btn").addEventListener("click",async()=>{
+  if(!user){status("m2result","Firebaseに接続できていません。少し待って再試行してください。");return;}
+  const team=$("team").value, who=$("who").value.trim(), when=$("when").value.trim();
+  const what=$("what").value.trim(), how=$("how").value.trim(), why=$("why").value.trim();
+  if([who,when,what,how,why].some(v=>v.length<4)){
+    status("m2result","5つの欄を、もう少し具体的に書こう！");
+    return;
+  }
+  try{
+    await set(ref(db,"ideas/team"+team),{team,who,when,what,how,why,clearedAt:Date.now()});
+    status("m2result","🎉 MISSION 2 CLEAR！ みんなの考えに共有されたよ。",true);
+    $("ideas").classList.remove("hidden");
+    $("m3").classList.remove("hidden");
+  }catch(e){status("m2result","保存できませんでした："+e.message);}
+});
+
+onValue(ref(db,"ideas"),snap=>{
+  const data=snap.val()||{};
+  const list=$("ideaList"); list.innerHTML="";
+  for(let i=1;i<=8;i++){
+    const x=data["team"+i];
+    if(!x) continue;
+    const d=document.createElement("div"); d.className="idea";
+    d.innerHTML=`<h3>🐾 ${i}班</h3>
+      <div><b>だれが：</b>${esc(x.who)}</div>
+      <div><b>いつ・どこで：</b>${esc(x.when)}</div>
+      <div><b>何をする：</b>${esc(x.what)}</div>
+      <div><b>どうやって：</b>${esc(x.how)}</div>
+      <div><b>なぜ：</b>${esc(x.why)}</div>`;
+    list.appendChild(d);
+  }
+  if(!list.children.length) list.innerHTML='<p class="small">まだ共有されたアイデアはありません。</p>';
+  updatePaws(data);
+});
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function updatePaws(data){
+  const p=$("paws");p.innerHTML="";
+  let n=0;
+  for(let i=1;i<=8;i++){
+    const b=document.createElement("button");
+    b.textContent=data["team"+i]?"🐾":"🔒";
+    b.className=data["team"+i]?"done":"";
+    b.title=i+"班";
+    p.appendChild(b);
+    if(data["team"+i])n++;
+  }
+  if(n===8){
+    $("m3result").textContent="🎉 8班すべてCLEAR！ FINALへ！";
+    $("m3result").className="status ok";
+    $("final").classList.remove("hidden");
+  }else{
+    $("m3result").textContent=`現在 ${n}/8班 CLEAR`;
+    $("m3result").className="status";
+  }
+}
+
+$("finalbtn").addEventListener("click",()=>{
+  const t=$("finalText").value.trim();
+  if(t.length<4){status("finalresult","クラスで決めた行動を具体的に書こう！");return;}
+  status("finalresult","🌈 FINAL CLEAR！ Semester 2のスタートへ！",true);
+});
+</script>
+</body>
+</html>
